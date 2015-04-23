@@ -384,10 +384,9 @@ begin
   expr := 'sin(-pi / 2)';
   expr := 'srt(4)';
   expr := 'pow(2, 2)';
-  expr := 'sum(1, 2, 3)';
+//  expr := 'sum(1, 2, 3)';
             
   Writeln(Expr + '=' + EvalExpr(expr));
-  Readln(expr);
 end;
 
 { TOperator }

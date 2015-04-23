@@ -29,30 +29,30 @@ end;
 var
   Tokenizer: TTokenizer;
   code: string;
-
 begin
-  try
-  TestEvaluator;
-  Exit;
-
   
-  Tokenizer := TTokenizer.Create;
-  code := 
-    'function MyFunction(Value: integer);'#13#10 +
-    'var'#13#10 +
-    '  i: integer;'#13#10 +
-    'begin'#13#10 +
-    '  i := 10;'#13#10 +
-    '  if (''alex'' = #32) then'#13#10 +
-    '    WriteLn(Value);'#13#10 +
-    'end;';
-  Writeln(Code);
-  Writeln('---------------------------------');
-//  WriteTokens(Tokenizer.Tokenize(code));
-  WriteTokens(Tokenizer.TokenizeFile('Tokenizer.txt'));
-  Tokenizer.Free;
-
-//  TestEvaluator;
+  try
+    if (false) then begin
+      TestEvaluator;
+    end else begin
+      Tokenizer := TTokenizer.Create;
+      code :=
+        'function MyFunction(Value: integer);'#13#10 +
+        'var'#13#10 +
+        '  i: integer;'#13#10 +
+        'begin'#13#10 +
+        '  i := 10;'#13#10 +
+        '  if (''alex'' = #32) then'#13#10 +
+        '    WriteLn(Value);'#13#10 +
+        'end;';
+      code := 'sql.GetField(''cc'').From(''plc0315'').Where(''cont=5121'').Limit(''1'');';
+      Writeln(Code);
+      Writeln('---------------------------------');
+      WriteTokens(Tokenizer.Tokenize(code));
+//      WriteTokens(Tokenizer.TokenizeFile('Tokenizer.txt'));
+      Tokenizer.Free;
+    end;
+    Readln(code);
   except
     on E: Exception do
       Writeln(E.Message);
