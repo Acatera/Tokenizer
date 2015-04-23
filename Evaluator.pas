@@ -54,6 +54,7 @@ begin
   FunctionsList[2] := 'sqr';
   FunctionsList[3] := 'sqrt';
   FunctionsList[4] := 'pow';
+//  FunctionsList[5] := 'sum';
 end;
   
 procedure GenerateOperatorMap;
@@ -186,10 +187,6 @@ begin
     if ((Tokens[i + 1] = '-') and (IsOperator(Tokens[i]))) then
       Tokens[i + 1] := '_';
   end;
-
-  //If the token is a function argument separator (e.g., a comma):
-    //  Until the token at the top of the stack is a left parenthesis, pop operators off the stack onto the output queue. 
-    //If no left parentheses are encountered, either the separator was misplaced or parentheses were mismatched.
   
   Output := TStack.Create;
   Stack := TStack.Create;
@@ -209,11 +206,12 @@ begin
         SawParenthesis := False;
         while ((Stack.HasNext) and (Stack.Peek <> '(')) do begin
           Output.Push(Stack.Pop);
-          if (Output.Peek = '(') then
-            SawParenthesis := True;
         end;
+        if (Stack.Peek = '(') then
+          SawParenthesis := True;
         if (not SawParenthesis) then
           raise Exception.Create('Mismatched parentheses or comma misplaced');
+        Continue;  
       end;
       
       if (IsOperator(Tokens[i])) then begin
@@ -227,16 +225,9 @@ begin
         end else if (Op.Simbol = '(') then begin
           Stack.Push(Op.Simbol);
         end else if (Op.Simbol = ')') then begin
-//          If the token is a right parenthesis:
-//            Until the token at the top of the stack is a left parenthesis, pop operators off the stack onto the output queue.
-//            Pop the left parenthesis from the stack, but not onto the output queue.
-//            If the token at the top of the stack is a function token, pop it onto the output queue.
-//            If the stack runs out without finding a left parenthesis, then there are mismatched parentheses.
           SawParenthesis := False;
           while (Stack.HasNext and (Stack.Peek <> '(')) do begin
             Output.Push(Stack.Pop);
-            if (Output.Peek = '(') then
-              SawParenthesis := True;
           end;
           if (Stack.Peek = '(') then begin
             SawParenthesis := True;
@@ -320,6 +311,9 @@ begin
           Term2 := StrToFloat(Stack.Pop);
           Value := Power(Term2, Term1);
           Stack.Push(Value);
+        end else if (LowerCase(Symbol) = 'sum') then begin
+          Value := StrToFloat(Stack.Pop) + StrToFloat(Stack.Pop) + StrToFloat(Stack.Pop);
+          Stack.Push(Value);
         end
           else begin
             raise Exception.Create('Invalid function: ' + Symbol);
@@ -389,6 +383,8 @@ begin
   expr := 'sin(pi / 2)';
   expr := 'sin(-pi / 2)';
   expr := 'srt(4)';
+  expr := 'pow(2, 2)';
+  expr := 'sum(1, 2, 3)';
             
   Writeln(Expr + '=' + EvalExpr(expr));
   Readln(expr);
