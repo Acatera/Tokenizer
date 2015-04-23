@@ -31,6 +31,7 @@ var
   code: string;
 
 begin
+  try
   TestEvaluator;
   Exit;
 
@@ -52,4 +53,8 @@ begin
   Tokenizer.Free;
 
 //  TestEvaluator;
+  except
+    on E: Exception do
+      Writeln(E.Message);
+  end;
 end.
