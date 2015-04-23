@@ -9,7 +9,8 @@ uses
   Classes,
   Math,
   Evaluator in 'Evaluator.pas',
-  Tokenizer in 'Tokenizer.pas';
+  Tokenizer in 'Tokenizer.pas',
+  SimpleStack in 'SimpleStack.pas';
 
 procedure WriteTokens(Tks: TDynStrArray);
 var
@@ -30,6 +31,10 @@ var
   code: string;
 
 begin
+  TestEvaluator;
+  Exit;
+
+  
   Tokenizer := TTokenizer.Create;
   code := 
     'function MyFunction(Value: integer);'#13#10 +

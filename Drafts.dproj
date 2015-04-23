@@ -30,6 +30,7 @@
       <MainSource>MainSource</MainSource>
     </DelphiCompile>
     <DCCReference Include="Evaluator.pas" />
+    <DCCReference Include="SimpleStack.pas" />
     <DCCReference Include="Tokenizer.pas" />
   </ItemGroup>
 </Project>
