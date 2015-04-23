@@ -42,9 +42,14 @@ begin
   else if ((op = '*') or (op = '/')) then
     Result := 2
   else if (op = '^') then
-    Result := 3
+    Result := 4
   else if ((op = '(') or (op = ')')) then
     Result := 0;
+end;
+
+function IsRAssoc(op: string): Boolean;
+begin
+//  if (op - '_')
 end;
 
 function GetNextToken(var Str: string): TToken;
