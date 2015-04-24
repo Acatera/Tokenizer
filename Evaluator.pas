@@ -28,7 +28,7 @@ var
   Str: string;
   iLen: Cardinal;
   expr: string;
-  OperatorMap: array[0..8] of TOperator;
+  OperatorMap: array[0..9] of TOperator;
   FunctionsList: TDynStrArray;
   ConstantsList: TDynStrArray;
 
@@ -54,7 +54,8 @@ begin
   FunctionsList[2] := 'sqr';
   FunctionsList[3] := 'sqrt';
   FunctionsList[4] := 'pow';
-//  FunctionsList[5] := 'sum';
+  FunctionsList[5] := 'min';
+  FunctionsList[6] := 'max';
 end;
   
 procedure GenerateOperatorMap;
@@ -65,9 +66,10 @@ begin
   OperatorMap[3].Create('-', 1, asLeft, paBinary);
   OperatorMap[4].Create('*', 2, asLeft, paBinary);
   OperatorMap[5].Create('/', 2, asLeft, paBinary);
-  OperatorMap[6].Create('^', 3, asLeft, paBinary);
-  OperatorMap[7].Create('_', 1, asRight, paUnary); //subst char for unary -
-  OperatorMap[8].Create('.', 6, asLeft, paBinary); //for float values
+  OperatorMap[6].Create('^', 3, asRight, paBinary);
+  OperatorMap[7].Create('_', 4, asRight, paUnary); //subst char for unary minus (eg: 2 + -2)
+  OperatorMap[8].Create('#', 4, asRight, paUnary); //subst char for unary plus (eg: +2 - 2)
+  OperatorMap[9].Create('.', 6, asLeft, paBinary); //for float values
 end;
 
 function IsConstant(Str: string): Boolean;
@@ -182,10 +184,15 @@ begin
 
   if (Tokens[0] = '-') then 
     Tokens[0] := '_';
+
+  if (Tokens[0] = '+') then 
+    Tokens[0] := '#';  
     
   for i := 0 to Length(Tokens) - 2 do begin //We'll check the current and next, needs to be -2;
-    if ((Tokens[i + 1] = '-') and (IsOperator(Tokens[i]))) then
+    if ((Tokens[i + 1] = '-') and (IsOperator(Tokens[i])) and (Tokens[i] <> ')')) then
       Tokens[i + 1] := '_';
+    if ((Tokens[i + 1] = '+') and (IsOperator(Tokens[i])) and (Tokens[i] <> ')')) then
+      Tokens[i + 1] := '#';  
   end;
   
   Output := TStack.Create;
@@ -207,7 +214,7 @@ begin
         while ((Stack.HasNext) and (Stack.Peek <> '(')) do begin
           Output.Push(Stack.Pop);
         end;
-        if (Stack.Peek = '(') then
+        if (Stack.HasNext and (Stack.Peek = '(')) then
           SawParenthesis := True;
         if (not SawParenthesis) then
           raise Exception.Create('Mismatched parentheses or comma misplaced');
@@ -229,12 +236,12 @@ begin
           while (Stack.HasNext and (Stack.Peek <> '(')) do begin
             Output.Push(Stack.Pop);
           end;
-          if (Stack.Peek = '(') then begin
+          if (Stack.HasNext and (Stack.Peek = '(')) then begin
             SawParenthesis := True;
             Stack.Pop;
           end;
           
-          if (IsFunction(Stack.Peek)) then
+          if (Stack.HasNext and IsFunction(Stack.Peek)) then
             Output.Push(Stack.Pop);
           if (not SawParenthesis) then
             raise Exception.Create('Mismatched parentheses');  
@@ -311,8 +318,11 @@ begin
           Term2 := StrToFloat(Stack.Pop);
           Value := Power(Term2, Term1);
           Stack.Push(Value);
-        end else if (LowerCase(Symbol) = 'sum') then begin
-          Value := StrToFloat(Stack.Pop) + StrToFloat(Stack.Pop) + StrToFloat(Stack.Pop);
+        end else if (LowerCase(Symbol) = 'min') then begin
+          Value := Min(StrToFloat(Stack.Pop), StrToFloat(Stack.Pop));
+          Stack.Push(Value);
+        end else if (LowerCase(Symbol) = 'max') then begin
+          Value := Max(StrToFloat(Stack.Pop), StrToFloat(Stack.Pop));
           Stack.Push(Value);
         end
           else begin
@@ -326,8 +336,12 @@ begin
           S := Stack.Pop;
           S := Stack.Pop + '.' + S;
           Value := StrToFloatDef(S, 0);
+          Stack.Push(Value);
         end else if (Symbol = '_') then begin
           Value := -StrToFloat(Stack.Pop);
+          Stack.Push(Value);
+        end else if (Symbol = '#') then begin
+          //Do nothing, the value is alread positive
         end else begin
           Term1 := StrToFloat(Stack.Pop);
           Term2 := StrToFloat(Stack.Pop);
@@ -344,9 +358,9 @@ begin
             Value := Math.Power(Term2, Term1)
           else 
             raise Exception.Create('Invalid operator: ' + Symbol);
+          Stack.Push(Value);  
         end;
-        Stack.Push(Value);
-      end;  
+      end;
     end;
 
     if (Stack.count = 1) then
@@ -368,23 +382,46 @@ var
   expr: string;
   i: integer;
 begin
-  expr := '3 + 4 * 2 / ( 1 - 5 ) ^ (2*8) ^ (3 + 3)';
+  expr := '3 + 4 * 2 / ( 1 - 5 ) ^ (2) ^ (3 + 3)';
+  Assert(EvalExpr(expr) = '3', expr);
   expr := '1.23 - 4654 + (123 * (0-12.39))';
-//  expr := '2 ^ 3 * 4';
-//  expr := '3 + 4 * 2 / 1 - 5 ^ 2 ^ 3';
-//  expr := '(1 + 2) * (2+4)';
-//  expr := '(1.24 + 1)';
-//  expr := '2 + -(2 * 4)';
+  Assert(EvalExpr(expr) = '-6176.74', expr);
+  expr := '2 ^ 3 * 4';
+  Assert(EvalExpr(expr) = '32', expr);
+  expr := '3 + 4 * 2 / 1 - 5 ^ 2 ^ 3';
+  Assert(EvalExpr(expr) = '-390614', expr);
+  expr := '(1 + 2) * (2+4)';
+  Assert(EvalExpr(expr) = '18', expr);
+  expr := '(1.24 + 1)';
+  Assert(EvalExpr(expr) = '2.24', expr);
+  expr := '2 + -(2 * 4)';
+  Assert(EvalExpr(expr) = '-6', expr);
   expr := '-1 + 2';
-//  expr := '2 + -1';
+  Assert(EvalExpr(expr) = '1', expr);
+  expr := '2 + -1';
+  Assert(EvalExpr(expr) = '1', expr);
   expr := '-(2 * 4) + 2';
+  Assert(EvalExpr(expr) = '-6', expr);
   expr := '10 ^ 2 * pi';
+  Assert(EvalExpr(expr) = '314.159265358979', expr);
   expr := 'sin(1)';
+  Assert(EvalExpr(expr) = '0.841470984807897', expr);
   expr := 'sin(pi / 2)';
+  Assert(EvalExpr(expr) = '1', expr);
   expr := 'sin(-pi / 2)';
-  expr := 'srt(4)';
-  expr := 'pow(2, 2)';
-//  expr := 'sum(1, 2, 3)';
+  Assert(EvalExpr(expr) = '-1', expr);
+//  expr := 'srt(4)'; //throws error
+//  Assert(EvalExpr(expr) = 'Error', expr);
+  expr := 'max(min(pow(2, 7), sqr(5)), 1.23 - 4654 + (123 * -12.39))';
+  Assert(EvalExpr(expr) = '25', expr);
+  expr := '123 * -12.39';
+  Assert(EvalExpr(expr) = '-1523.97', expr);
+  expr := '((-2 + 1) * 19)';
+  Assert(EvalExpr(expr) = '-19', expr);
+  expr := '-pi+(1 - 2)';
+  Assert(EvalExpr(expr) = '-4.14159265358979', expr);
+  expr := '+4 ^ -2';
+  Assert(EvalExpr(expr) = '0.0625', expr);
             
   Writeln(Expr + '=' + EvalExpr(expr));
 end;

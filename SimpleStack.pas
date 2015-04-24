@@ -69,7 +69,7 @@ begin
     Result := fArray[Count - 1];
     Dec(fCount); //No need to modify the array;
   end else
-    raise Exception.Create('Peek error: empty stack');
+    raise Exception.Create('Pop error: empty stack');
 end;
 
 procedure TStack.Push(Value: string);

@@ -32,7 +32,7 @@ var
 begin
   
   try
-    if (false) then begin
+    if (true) then begin
       TestEvaluator;
     end else begin
       Tokenizer := TTokenizer.Create;
